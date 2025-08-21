@@ -1,4 +1,6 @@
 from django import forms
+import os
+import stripe
 from django.views.decorators.http import require_POST
 from django.contrib.auth import logout as auth_logout
 from django.shortcuts import render, redirect, get_object_or_404
@@ -7,7 +9,9 @@ from django import forms
 from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Customer, Product, Cart, CartItem
+from .models import Customer, Order, OrderItem, Product, Cart, CartItem
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
 
 
 class ExtendedUserCreationForm(UserCreationForm):
@@ -169,40 +173,68 @@ class ShippingInfoForm(forms.Form):
     phone = forms.CharField(max_length=20, label='Phone')
 
 
-def checkout(request):
+def create_checkout_session(request):
     if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to checkout.')
+        return redirect('ecommerce:login')
+    cart = get_user_cart(request)
+    items = cart.items.select_related('product') if cart else []
+    if not items:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('ecommerce:view_cart')
+
+    stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+    line_items = []
+    for item in items:
+        line_items.append({
+            'price_data': {
+                'currency': 'usd',
+                'product_data': {
+                    'name': item.product.name,
+                },
+                'unit_amount': int(item.product.price * 100),
+            },
+            'quantity': item.quantity,
+        })
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=line_items,
+            mode='payment',
+            success_url=request.build_absolute_uri('/success/'),
+            cancel_url=request.build_absolute_uri('/cart/'),
+        )
+        return redirect(session.url)
+    except Exception as e:
+        messages.error(request, f'Error creating Stripe session: {str(e)}')
+        return redirect('ecommerce:checkout')
+
+# Success and cancel views
+
+
+def payment_success(request):
+    if not request.user.is_authenticated:
         return redirect('ecommerce:login')
     customer = Customer.objects.get(user=request.user)
     cart = get_user_cart(request)
     items = cart.items.select_related('product') if cart else []
     if not items:
-        messages.error(
-            request, 'Your cart is empty. Add items before checking out.')
-        return redirect('ecommerce:view_cart')
-    subtotal = sum(item.product.price * item.quantity for item in items)
+        messages.error(request, 'No items found for order.')
+        return redirect('ecommerce:index')
+    total = sum(item.product.price * item.quantity for item in items)
+    # Create order
+    order = Order.objects.create(
+        customer=customer, total=total, status='Paid')
+    for item in items:
+        OrderItem.objects.create(
+            order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+    # Clear cart
+    cart.items.all().delete()
+    context = {
+        'order': order,
+    }
+    return render(request, 'ecommerce/payment_success.html', context)
 
-    initial = {
-        'address': customer.address,
-        'phone': customer.phone,
-    }
-    form = ShippingInfoForm(request.POST or None, initial=initial)
-    user_info = {
-        'username': request.user.username,
-        'email': request.user.email,
-        'address': customer.address,
-        'phone': customer.phone,
-    }
-    if request.method == 'POST' and form.is_valid():
-        # Save shipping info and proceed to payment (not implemented yet)
-        shipping_data = form.cleaned_data
-        messages.success(
-            request, 'Shipping info submitted. Proceed to payment.')
-        # Redirect to payment or order confirmation page
-        return redirect('ecommerce:view_cart')
-    return render(request, 'ecommerce/checkout.html', {
-        'user_info': user_info,
-        'form': form,
-        'items': items,
-        'subtotal': subtotal,
-    })
+
+def payment_cancel(request):
+    messages.info(request, 'You have cancelled the payment.')
+    return redirect('ecommerce:view_cart')

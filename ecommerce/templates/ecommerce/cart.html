@@ -41,7 +41,10 @@
     </div>
     <div class="mt-3 d-flex gap-2">
       <a href="{% url 'ecommerce:index' %}" class="btn btn-primary">Continue Shopping</a>
-      <a href="{% url 'ecommerce:checkout' %}" class="btn btn-success">Checkout</a>
+      <form action="{% url 'ecommerce:create_checkout_session' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Checkout</button>
+      </form>
     </div>
   {% else %}
     <p>Your cart is empty.</p>

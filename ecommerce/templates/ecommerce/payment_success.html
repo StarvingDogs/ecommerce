@@ -1,0 +1,21 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Payment Successful</h2>
+  <p>Thank you for your purchase!</p>
+  <p><strong>Order Reference:</strong> {{ order.id }}</p>
+  <ul class="list-group mb-3">
+    {% for item in order.items.all %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ item.product.name }} (x{{ item.quantity }})
+        <span>${{ item.price|floatformat:2 }}</span>
+      </li>
+    {% endfor %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <strong>Total Paid</strong>
+      <strong>${{ order.total|floatformat:2 }}</strong>
+    </li>
+  </ul>
+  <a href="{% url 'ecommerce:index' %}" class="btn btn-primary">Continue Shopping</a>
+</div>
+{% endblock %}

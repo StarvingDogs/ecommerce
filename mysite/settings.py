@@ -30,6 +30,11 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+# Stripe API keys (use environment variables for security)
+import os
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+
 INSTALLED_APPS = [
     'ecommerce.apps.EcommerceConfig',
     'django.contrib.admin',
