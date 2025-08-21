@@ -1,0 +1,20 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Your Order History</h2>
+  {% if orders %}
+    <div class="list-group">
+      {% for order in orders %}
+        <a href="{% url 'ecommerce:order_detail' order.id %}" class="list-group-item list-group-item-action mb-2">
+          <h5>Order #{{ order.id }} <span class="badge bg-info">{{ order.status }}</span></h5>
+          <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+          <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>You have no orders yet.</p>
+  {% endif %}
+  <a href="{% url 'ecommerce:index' %}" class="btn btn-primary mt-3">Back to Shop</a>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django import forms
 import os
 import stripe
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib.auth import logout as auth_logout
 from django.shortcuts import render, redirect, get_object_or_404
@@ -238,3 +239,18 @@ def payment_success(request):
 def payment_cancel(request):
     messages.info(request, 'You have cancelled the payment.')
     return redirect('ecommerce:view_cart')
+
+# Order detail view
+@login_required
+def order_detail(request, order_id):
+    customer = Customer.objects.get(user=request.user)
+    order = get_object_or_404(customer.order_set, id=order_id)
+    return render(request, 'ecommerce/order_detail.html', {'order': order})
+# Order history view
+
+
+@login_required
+def order_history(request):
+    customer = Customer.objects.get(user=request.user)
+    orders = customer.order_set.order_by('-created_at').prefetch_related('items__product')
+    return render(request, 'ecommerce/order_history.html', {'orders': orders})
