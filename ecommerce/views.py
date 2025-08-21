@@ -11,9 +11,8 @@ from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.core.paginator import Paginator
 from .models import Customer, Order, OrderItem, Product, Cart, CartItem, Wishlist, WishlistItem
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponse
-
+from django import forms
+from .models import Review
 
 class ExtendedUserCreationForm(UserCreationForm):
     address = forms.CharField(max_length=255, required=True, label='Address')
@@ -265,7 +264,45 @@ def payment_cancel(request):
 def order_detail(request, order_id):
     customer = Customer.objects.get(user=request.user)
     order = get_object_or_404(customer.order_set, id=order_id)
-    return render(request, 'ecommerce/order_detail.html', {'order': order})
+    # For each product in the order, check if the user has already left a review
+    review_status = []
+    for item in order.items.select_related('product'):
+        has_reviewed = item.product.reviews.filter(customer=customer).exists()
+        review_status.append({'product_id': item.product.id, 'has_reviewed': has_reviewed})
+    return render(request, 'ecommerce/order_detail.html', {'order': order, 'review_status': review_status})
+
+
+# --- Review Form and View ---
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5}),
+            'comment': forms.Textarea(attrs={'rows': 3}),
+        }
+
+@login_required
+def leave_review(request, product_id, order_id):
+    customer = Customer.objects.get(user=request.user)
+    product = get_object_or_404(Product, pk=product_id)
+    order = get_object_or_404(Order, pk=order_id, customer=customer)
+    # Only allow review if not already reviewed
+    if Review.objects.filter(product=product, customer=customer).exists():
+        messages.info(request, 'You have already reviewed this product.')
+        return redirect('ecommerce:order_detail', order_id=order_id)
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.product = product
+            review.customer = customer
+            review.save()
+            messages.success(request, 'Thank you for your review!')
+            return redirect('ecommerce:order_detail', order_id=order_id)
+    else:
+        form = ReviewForm()
+    return render(request, 'ecommerce/leave_review.html', {'form': form, 'product': product, 'order': order})
 # Order history view
 
 

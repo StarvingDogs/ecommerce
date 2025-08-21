@@ -5,12 +5,44 @@
   <p><strong>Status:</strong> <span class="badge bg-info">{{ order.status }}</span></p>
   <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
   <ul class="list-group mb-3">
-    {% for item in order.items.all %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ item.product.name }} (x{{ item.quantity }})
-        <span>${{ item.price|floatformat:2 }}</span>
-      </li>
-    {% endfor %}
+      {% for item in order.items.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            {# Display product name and quantity #}
+            {{ item.product.name }} (x{{ item.quantity }})
+            {# Loop through review_status to find matching product #}
+            {% if review_status %}
+              {% for status in review_status %}
+                {% if status.product_id == item.product.id %}
+                  {# If not reviewed, show Leave Review button #}
+                  {% if not status.has_reviewed %}
+                    <a href="{% url 'ecommerce:leave_review' order.id item.product.id %}" class="btn btn-sm btn-outline-success ms-2">Leave Review</a>
+                  {% else %}
+                    {# If reviewed, show badge and star rating #}
+                    <span class="badge bg-success ms-2">Reviewed</span>
+                    {# Show star rating for this product #}
+                    {% for review in item.product.reviews.all %}
+                      {% if review.customer == request.user.customer %}
+                        <span class="ms-2">
+                          {% for i in "12345"|slice:":review.rating" %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                          {% endfor %}
+                          {% for i in "12345"|slice:"review.rating:" %}
+                            <i class="bi bi-star text-warning"></i>
+                          {% endfor %}
+                          ({{ review.rating }} stars)
+                        </span>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+          {# Display item price #}
+          <span>${{ item.price|floatformat:2 }}</span>
+        </li>
+      {% endfor %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
       <strong>Total</strong>
       <strong>${{ order.total|floatformat:2 }}</strong>

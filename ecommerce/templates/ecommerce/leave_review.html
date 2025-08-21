@@ -1,0 +1,19 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2>Leave a Review for {{ product.name }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_rating" class="form-label">Star Rating (1-5)</label>
+      {{ form.rating }}
+    </div>
+    <div class="mb-3">
+      <label for="id_comment" class="form-label">Comment</label>
+      {{ form.comment }}
+    </div>
+    <button type="submit" class="btn btn-primary">Submit Review</button>
+    <a href="{% url 'ecommerce:order_detail' order.id %}" class="btn btn-secondary ms-2">Back to Order</a>
+  </form>
+</div>
+{% endblock %}
