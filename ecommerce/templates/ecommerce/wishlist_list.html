@@ -1,0 +1,23 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Your Wishlists</h2>
+  <a href="{% url 'ecommerce:wishlist_create' %}" class="btn btn-primary mb-3">Create New Wishlist</a>
+  <ul class="list-group">
+    {% for wishlist in wishlists %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+    <a href="{% url 'ecommerce:wishlist_detail' wishlist.id %}">{{ wishlist.name|default:"Wishlist " }}</a>
+      <span>
+        <a href="{% url 'ecommerce:wishlist_rename' wishlist.id %}" class="btn btn-sm btn-warning">Rename</a>
+        <form action="{% url 'ecommerce:wishlist_delete' wishlist.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </span>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No wishlists found.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

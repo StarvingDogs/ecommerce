@@ -1,0 +1,12 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Delete Wishlist</h2>
+  <form method="post">
+    {% csrf_token %}
+    <p>Are you sure you want to delete the wishlist <strong>{{ wishlist.name|default:'Wishlist' }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="{% url 'ecommerce:wishlist_list' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

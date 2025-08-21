@@ -19,6 +19,20 @@
           {% csrf_token %}
           <button type="submit" class="btn btn-success">Add to Cart</button>
         </form>
+          {% if wishlists %}
+          <form action="{% url 'ecommerce:add_to_wishlist' product.pk %}" method="post" class="mt-2">
+            {% csrf_token %}
+            <div class="input-group">
+              <select name="wishlist_id" class="form-select" required>
+                <option value="" disabled selected>Select Wishlist</option>
+                {% for wishlist in wishlists %}
+                  <option value="{{ wishlist.id }}">{{ wishlist.name|default:'Wishlist' }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn btn-outline-primary">Add to Wishlist</button>
+            </div>
+          </form>
+          {% endif %}
       {% endif %}
     </div>
   </div>

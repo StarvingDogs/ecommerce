@@ -58,9 +58,10 @@ class OrderItem(models.Model):
 
 class Wishlist(models.Model):
 	customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+	name = models.CharField(max_length=100, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	def __str__(self):
-		return f"Wishlist {self.id} for {self.customer.user.username}"
+		return self.name if self.name else f"Wishlist {self.id} for {self.customer.user.username}"
 
 
 class WishlistItem(models.Model):

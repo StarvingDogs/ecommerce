@@ -44,6 +44,14 @@
                 Cart
               </a>
             </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'ecommerce:wishlist_list' %}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
+                    <path d="M8 2.748-.717-.737C5.6-.281 8 3.223 8 3.223s2.4-3.504 6.717-1.475C15.824 4.6 8 10.25 8 10.25S.176 4.6 8 2.748z"/>
+                  </svg>
+                  Wishlists
+                </a>
+              </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'ecommerce:order_history' %}">Order History</a>
             </li>

@@ -1,0 +1,29 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>{{ wishlist.name|default:'Wishlist' }}</h2>
+  <a href="{% url 'ecommerce:wishlist_list' %}" class="btn btn-secondary mb-3">Back to Wishlists</a>
+  <ul class="list-group">
+    {% for item in items %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong>{{ item.product.name }}</strong> <span class="text-muted">({{ item.product.brand }})</span><br>
+        <span>{{ item.product.price }} {{ item.product.category }}</span>
+      </div>
+      <span>
+        <form action="{% url 'ecommerce:wishlist_add_to_cart' wishlist.id item.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-success">Add to Cart</button>
+        </form>
+        <form action="{% url 'ecommerce:wishlist_remove_item' wishlist.id item.id %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+        </form>
+      </span>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No items in this wishlist.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

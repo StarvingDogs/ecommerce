@@ -10,7 +10,7 @@ from django import forms
 from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Customer, Order, OrderItem, Product, Cart, CartItem
+from .models import Customer, Order, OrderItem, Product, Cart, CartItem, Wishlist, WishlistItem
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 
@@ -91,8 +91,28 @@ def index(request):
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    return render(request, 'ecommerce/detail.html', {'product': product})
+    customer = None
+    wishlists = None
+    if request.user.is_authenticated:
+        customer = Customer.objects.filter(user=request.user).first()
+        if customer:
+            wishlists = Wishlist.objects.filter(customer=customer)
+    return render(request, 'ecommerce/detail.html', {'product': product, 'wishlists': wishlists})
 
+
+@login_required
+def add_to_wishlist(request, product_id):
+    customer = get_object_or_404(Customer, user=request.user)
+    product = get_object_or_404(Product, pk=product_id)
+    wishlist_id = request.POST.get('wishlist_id')
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer=customer)
+    # Prevent duplicates
+    if not WishlistItem.objects.filter(wishlist=wishlist, product=product).exists():
+        WishlistItem.objects.create(wishlist=wishlist, product=product)
+        messages.success(request, f'Added {product.name} to wishlist {wishlist.name}.')
+    else:
+        messages.info(request, f'{product.name} is already in wishlist {wishlist.name}.')
+    return redirect('ecommerce:product_detail', pk=product_id)
 
 def get_user_cart(request):
     if not request.user.is_authenticated:
@@ -254,3 +274,80 @@ def order_history(request):
     customer = Customer.objects.get(user=request.user)
     orders = customer.order_set.order_by('-created_at').prefetch_related('items__product')
     return render(request, 'ecommerce/order_history.html', {'orders': orders})
+
+# --- Wishlist Management Views ---
+@login_required
+def wishlist_list(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    wishlists = Wishlist.objects.filter(customer=customer)
+    return render(request, 'ecommerce/wishlist_list.html', {'wishlists': wishlists})
+
+@login_required
+def wishlist_create(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if name:
+            wishlist = Wishlist.objects.create(customer=customer)
+            wishlist.name = name
+            wishlist.save()
+            messages.success(request, f'Wishlist "{wishlist.name}" created successfully.')
+            return redirect('ecommerce:wishlist_list')
+        else:
+            messages.error(request, 'Wishlist name cannot be empty.')
+    return render(request, 'ecommerce/wishlist_create.html')
+
+@login_required
+def wishlist_rename(request, wishlist_id):
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer__user=request.user)
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        if name:
+            wishlist.name = name
+            wishlist.save()
+            messages.success(request, f'Wishlist renamed to "{wishlist.name}" successfully.')
+            return redirect('ecommerce:wishlist_list')
+        else:
+            messages.error(request, 'Wishlist name cannot be empty.')
+    return render(request, 'ecommerce/wishlist_rename.html', {'wishlist': wishlist})
+
+@login_required
+def wishlist_delete(request, wishlist_id):
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer__user=request.user)
+    if request.method == 'POST':
+        wishlist.delete()
+        messages.success(request, f'Wishlist "{wishlist.name}" deleted successfully.')
+        return redirect('ecommerce:wishlist_list')
+    return render(request, 'ecommerce/wishlist_delete.html', {'wishlist': wishlist})
+
+
+# --- Wishlist Detail and Item Actions ---
+@login_required
+def wishlist_detail(request, wishlist_id):
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer__user=request.user)
+    items = wishlist.items.select_related('product')
+    return render(request, 'ecommerce/wishlist_detail.html', {'wishlist': wishlist, 'items': items})
+
+@login_required
+def wishlist_remove_item(request, wishlist_id, item_id):
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer__user=request.user)
+    item = get_object_or_404(WishlistItem, id=item_id, wishlist=wishlist)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, f'Item removed from wishlist.')
+        return redirect('ecommerce:wishlist_detail', wishlist_id=wishlist.id)
+    return redirect('ecommerce:wishlist_detail', wishlist_id=wishlist.id)
+
+@login_required
+def wishlist_add_to_cart(request, wishlist_id, item_id):
+    wishlist = get_object_or_404(Wishlist, id=wishlist_id, customer__user=request.user)
+    item = get_object_or_404(WishlistItem, id=item_id, wishlist=wishlist)
+    customer = get_object_or_404(Customer, user=request.user)
+    cart, _ = Cart.objects.get_or_create(customer=customer)
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=item.product)
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+    item.delete()
+    messages.success(request, f'Item added to cart and removed from wishlist.')
+    return redirect('ecommerce:wishlist_detail', wishlist_id=wishlist.id)
