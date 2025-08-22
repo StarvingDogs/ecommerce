@@ -3,7 +3,6 @@
 This Django eCommerce project is organized as follows:
 
 - **ecommerce/**: Main app containing models, views, templates, and URLs for the eCommerce functionality.
-- **cinema/**: Additional app (purpose to be documented if relevant).
 - **mysite/**: Project configuration, settings, and root URLs.
 - **templates/**: HTML templates using Bootstrap for UI.
 - **db.sqlite3**: SQLite database for development.
