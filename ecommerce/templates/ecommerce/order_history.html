@@ -6,9 +6,12 @@
     <div class="list-group">
       {% for order in orders %}
         <a href="{% url 'ecommerce:order_detail' order.id %}" class="list-group-item list-group-item-action mb-2">
-          <h5>Order #{{ order.id }} <span class="badge bg-info">{{ order.status }}</span></h5>
-          <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
-          <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
+          <h5>Order #{{ order.id }}</h5>
+          <span class="badge bg-info">{{ order.status }}</span>
+          <div class="mt-4">
+            <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>Total:</strong> ${{ order.total|floatformat:2 }}</p>
+          </div>
         </a>
       {% endfor %}
     </div>

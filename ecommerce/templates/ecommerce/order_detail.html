@@ -2,8 +2,8 @@
 {% block content %}
 <div class="container mt-5">
   <h2>Order #{{ order.id }}</h2>
-  <p><strong>Status:</strong> <span class="badge bg-info">{{ order.status }}</span></p>
-  <p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+  <span class="badge bg-info">{{ order.status }}</span>
+  <p class="mt-2"><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
   <ul class="list-group mb-3">
       {% for item in order.items.all %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -23,13 +23,15 @@
     {% for review in order.reviews.all %}
       {% if review.customer == request.user.customer %}
         <div class="mb-2">
-          {#
+          
+          {% comment %}
             This loop iterates 5 times (once for each character in "12345"), representing 5 stars.
             forloop.counter gives the current iteration number (1 to 5).
             If the current counter is less than or equal to the review's rating, it shows a filled star.
             Otherwise, it shows an empty star.
             This way, you always display 5 stars, with the correct number filled according to the review rating.
-          #}
+          {% endcomment %}
+
           {% for i in "12345" %}
             {% if forloop.counter <= review.rating %}
               <i class="bi bi-star-fill text-warning"></i>
