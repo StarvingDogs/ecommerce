@@ -176,6 +176,7 @@ def remove_cart_item(request, item_id):
     return redirect('ecommerce:view_cart')
 
 
+@login_required
 def view_cart(request):
     cart = get_user_cart(request)
     items = cart.items.select_related('product') if cart else []
