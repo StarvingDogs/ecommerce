@@ -3,21 +3,31 @@
 <div class="container mt-4">
   <h2>Your Wishlists</h2>
   <a href="{% url 'ecommerce:wishlist_create' %}" class="btn btn-primary mb-3">Create New Wishlist</a>
-  <ul class="list-group">
+  <div class="row">
     {% for wishlist in wishlists %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-    <a href="{% url 'ecommerce:wishlist_detail' wishlist.id %}">{{ wishlist.name|default:"Wishlist " }}</a>
-      <span>
-        <a href="{% url 'ecommerce:wishlist_rename' wishlist.id %}" class="btn btn-sm btn-warning">Rename</a>
-        <form action="{% url 'ecommerce:wishlist_delete' wishlist.id %}" method="post" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-        </form>
-      </span>
-    </li>
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <h5 class="card-title">
+              <a href="{% url 'ecommerce:wishlist_detail' wishlist.id %}" style="text-decoration: none; color: inherit;">
+                {{ wishlist.name|default:"Wishlist " }}
+              </a>
+            </h5>
+            <div class="mt-3">
+              <a href="{% url 'ecommerce:wishlist_rename' wishlist.id %}" class="btn btn-sm btn-warning me-2">Rename</a>
+              <form action="{% url 'ecommerce:wishlist_delete' wishlist.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
     {% empty %}
-    <li class="list-group-item">No wishlists found.</li>
+      <div class="col-12">
+        <div class="alert alert-info">No wishlists found.</div>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
 </div>
 {% endblock %}
