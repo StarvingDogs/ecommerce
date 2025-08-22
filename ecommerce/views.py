@@ -264,12 +264,9 @@ def payment_cancel(request):
 def order_detail(request, order_id):
     customer = Customer.objects.get(user=request.user)
     order = get_object_or_404(customer.order_set, id=order_id)
-    # For each product in the order, check if the user has already left a review
-    review_status = []
-    for item in order.items.select_related('product'):
-        has_reviewed = item.product.reviews.filter(customer=customer).exists()
-        review_status.append({'product_id': item.product.id, 'has_reviewed': has_reviewed})
-    return render(request, 'ecommerce/order_detail.html', {'order': order, 'review_status': review_status})
+    # Check if the user has already left a review for this order
+    has_reviewed = order.reviews.filter(customer=customer).exists()
+    return render(request, 'ecommerce/order_detail.html', {'order': order, 'has_reviewed': has_reviewed})
 
 
 # --- Review Form and View ---
@@ -283,26 +280,25 @@ class ReviewForm(forms.ModelForm):
         }
 
 @login_required
-def leave_review(request, product_id, order_id):
+def leave_review(request, order_id):
     customer = Customer.objects.get(user=request.user)
-    product = get_object_or_404(Product, pk=product_id)
     order = get_object_or_404(Order, pk=order_id, customer=customer)
     # Only allow review if not already reviewed
-    if Review.objects.filter(product=product, customer=customer).exists():
-        messages.info(request, 'You have already reviewed this product.')
+    if Review.objects.filter(order=order, customer=customer).exists():
+        messages.info(request, 'You have already reviewed this order.')
         return redirect('ecommerce:order_detail', order_id=order_id)
     if request.method == 'POST':
         form = ReviewForm(request.POST)
         if form.is_valid():
             review = form.save(commit=False)
-            review.product = product
+            review.order = order
             review.customer = customer
             review.save()
-            messages.success(request, 'Thank you for your review!')
+            messages.success(request, 'Review submitted successfully.')
             return redirect('ecommerce:order_detail', order_id=order_id)
     else:
         form = ReviewForm()
-    return render(request, 'ecommerce/leave_review.html', {'form': form, 'product': product, 'order': order})
+    return render(request, 'ecommerce/leave_review.html', {'form': form, 'order': order})
 # Order history view
 
 

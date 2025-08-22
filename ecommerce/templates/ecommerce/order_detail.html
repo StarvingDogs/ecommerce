@@ -8,38 +8,8 @@
       {% for item in order.items.all %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
-            {# Display product name and quantity #}
             {{ item.product.name }} (x{{ item.quantity }})
-            {# Loop through review_status to find matching product #}
-            {% if review_status %}
-              {% for status in review_status %}
-                {% if status.product_id == item.product.id %}
-                  {# If not reviewed, show Leave Review button #}
-                  {% if not status.has_reviewed %}
-                    <a href="{% url 'ecommerce:leave_review' order.id item.product.id %}" class="btn btn-sm btn-outline-success ms-2">Leave Review</a>
-                  {% else %}
-                    {# If reviewed, show badge and star rating #}
-                    <span class="badge bg-success ms-2">Reviewed</span>
-                    {# Show star rating for this product #}
-                    {% for review in item.product.reviews.all %}
-                      {% if review.customer == request.user.customer %}
-                        <span class="ms-2">
-                          {% for i in "12345"|slice:":review.rating" %}
-                            <i class="bi bi-star-fill text-warning"></i>
-                          {% endfor %}
-                          {% for i in "12345"|slice:"review.rating:" %}
-                            <i class="bi bi-star text-warning"></i>
-                          {% endfor %}
-                          ({{ review.rating }} stars)
-                        </span>
-                      {% endif %}
-                    {% endfor %}
-                  {% endif %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
           </div>
-          {# Display item price #}
           <span>${{ item.price|floatformat:2 }}</span>
         </li>
       {% endfor %}
@@ -48,6 +18,34 @@
       <strong>${{ order.total|floatformat:2 }}</strong>
     </li>
   </ul>
+  {% if has_reviewed %}
+    <span class="badge bg-success mb-3">Order Reviewed</span>
+    {% for review in order.reviews.all %}
+      {% if review.customer == request.user.customer %}
+        <div class="mb-2">
+          {#
+            This loop iterates 5 times (once for each character in "12345"), representing 5 stars.
+            forloop.counter gives the current iteration number (1 to 5).
+            If the current counter is less than or equal to the review's rating, it shows a filled star.
+            Otherwise, it shows an empty star.
+            This way, you always display 5 stars, with the correct number filled according to the review rating.
+          #}
+          {% for i in "12345" %}
+            {% if forloop.counter <= review.rating %}
+              <i class="bi bi-star-fill text-warning"></i>
+            {% else %}
+              <i class="bi bi-star text-warning"></i>
+            {% endif %}
+          {% endfor %}
+          ({{ review.rating }} stars)
+          <br>
+          <strong>Comment:</strong> {{ review.comment }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <a href="{% url 'ecommerce:leave_review' order.id %}" class="btn btn-outline-success mb-3">Leave Review for Order</a>
+  {% endif %}
   <a href="{% url 'ecommerce:order_history' %}" class="btn btn-secondary">Back to Order History</a>
   <a href="{% url 'ecommerce:index' %}" class="btn btn-primary">Back to Shop</a>
 </div>

@@ -84,10 +84,10 @@ class ShippingInfo(models.Model):
 
 
 class Review(models.Model):
-	product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+	order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
 	customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 	rating = models.PositiveIntegerField(default=1)
 	comment = models.TextField(blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	def __str__(self):
-		return f"{self.rating} stars by {self.customer.user.username}"
+		return f"{self.rating} stars by {self.customer.user.username} for Order {self.order.id}"
