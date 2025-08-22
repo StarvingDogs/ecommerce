@@ -16,6 +16,18 @@
       <strong>${{ order.total|floatformat:2 }}</strong>
     </li>
   </ul>
+  {% if shipping_info %}
+  <div class="card mt-4">
+    <div class="card-header">Shipping Information</div>
+    <div class="card-body">
+      <p><strong>Address:</strong> {{ shipping_info.address }}</p>
+      <p><strong>City:</strong> {{ shipping_info.city }}</p>
+      <p><strong>Postal Code:</strong> {{ shipping_info.postal_code }}</p>
+      <p><strong>Country:</strong> {{ shipping_info.country }}</p>
+      <p><strong>Phone:</strong> {{ shipping_info.phone }}</p>
+    </div>
+  </div>
+  {% endif %}
   <a href="{% url 'ecommerce:product_list' %}" class="btn btn-primary">Continue Shopping</a>
 </div>
 {% endblock %}

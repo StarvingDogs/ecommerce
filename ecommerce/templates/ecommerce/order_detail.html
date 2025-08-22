@@ -48,6 +48,18 @@
   {% else %}
     <a href="{% url 'ecommerce:leave_review' order.id %}" class="btn btn-outline-success mb-3">Leave Review for Order</a>
   {% endif %}
+  {% if order.shippinginfo %}
+  <div class="card my-4">
+    <div class="card-header">Shipping Information</div>
+    <div class="card-body">
+      <p><strong>Address:</strong> {{ order.shippinginfo.address }}</p>
+      <p><strong>City:</strong> {{ order.shippinginfo.city }}</p>
+      <p><strong>Postal Code:</strong> {{ order.shippinginfo.postal_code }}</p>
+      <p><strong>Country:</strong> {{ order.shippinginfo.country }}</p>
+      <p><strong>Phone:</strong> {{ order.shippinginfo.phone }}</p>
+    </div>
+  </div>
+  {% endif %}
   <a href="{% url 'ecommerce:order_history' %}" class="btn btn-secondary">Back to Order History</a>
   <a href="{% url 'ecommerce:product_list' %}" class="btn btn-primary">Back to Shop</a>
 </div>

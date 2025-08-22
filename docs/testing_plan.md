@@ -199,9 +199,30 @@ This document outlines manual test steps and expected outcomes for each page and
 
 ## 7. Shipping Information
 
-- **Step:** Proceed to checkout
-- **Action:** Enter shipping details
-- **Expectation:** Details saved, proceed to payment
+### Managing Shipping Addresses
+
+**Step 1:** Access the shipping address management page.
+
+- **Action:** Navigate to "Addresses" in the site navigation.
+- **Expectation:** List of saved shipping addresses is displayed, with options to add, edit, or delete.
+
+**Step 2:** Add a new shipping address.
+
+- **Action:** Click "Add New Address", fill in address, city, postal code, country, and phone, then submit.
+- **Expectation:** Address is saved and appears in the list.
+
+**Step 3:** Edit an existing address.
+
+- **Action:** Click "Edit" next to an address, update details, and submit.
+- **Expectation:** Address updates and confirmation message is shown.
+
+**Step 4:** Delete an address.
+
+
+- **Action:** Click "Delete" next to an address, confirm deletion.
+- **Expectation:**
+  - If the address is not linked to any order, it is removed from the list and a confirmation message is shown.
+  - If the address is linked to an order, deletion is prevented and a message explains why it cannot be deleted.
 
 ## 8. Stripe Payment
 
@@ -221,11 +242,14 @@ For test card scenarios and more, see the official Stripe testing documentation:
 - **Action:** Fill in valid card/payment details and submit.
 - **Expectation:** Payment is processed by Stripe.
 
+
 **Step 3:** On successful payment, redirected to success page.
 
 - **Action:** Complete payment and follow redirect.
 - **Expectation:**
-  - Success page loads, showing order reference, items, and total paid.
+  - Stripe collects the shipping address during checkout.
+  - On successful payment, the shipping address is added to the database and linked to the order.
+  - Success page loads, showing order reference, items, total paid, and shipping address used for the order.
   - Cart is cleared.
   - Thank you message and order details shown.
 
@@ -247,10 +271,11 @@ For test card scenarios and more, see the official Stripe testing documentation:
 - **Action:** Navigate to "Order History" from the navigation or user menu.
 - **Expectation:** List of past orders is displayed, showing order number, status, date, and total.
 
+
 **Step 2:** View order details.
 
 - **Action:** Click on an order to view its details.
-- **Expectation:** Order detail page loads, showing all items, quantities, prices, total, and status.
+- **Expectation:** Order detail page loads, showing all items, quantities, prices, total, status, and shipping address used for the order.
 
 **Step 3:** Review order actions.
 

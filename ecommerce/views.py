@@ -10,9 +10,59 @@ from django import forms
 from django.contrib.auth import login as auth_login
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Customer, Order, OrderItem, Product, Cart, CartItem, Wishlist, WishlistItem
+from .models import Customer, Order, OrderItem, Product, Cart, CartItem, Wishlist, WishlistItem, ShippingInfo
 from django import forms
 from .models import Review
+from .forms import ShippingInfoForm
+# --- Shipping Address Management Views ---
+
+@login_required
+def shipping_address_list(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    addresses = ShippingInfo.objects.filter(customer=customer)
+    return render(request, 'ecommerce/shipping_address_list.html', {'addresses': addresses})
+
+@login_required
+def shipping_address_add(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    if request.method == 'POST':
+        form = ShippingInfoForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.customer = customer
+            address.save()
+            messages.success(request, 'Shipping address added.')
+            return redirect('ecommerce:shipping_address_list')
+    else:
+        form = ShippingInfoForm()
+    return render(request, 'ecommerce/shipping_address_add.html', {'form': form})
+
+@login_required
+def shipping_address_edit(request, address_id):
+    customer = get_object_or_404(Customer, user=request.user)
+    address = get_object_or_404(ShippingInfo, id=address_id, customer=customer)
+    if request.method == 'POST':
+        form = ShippingInfoForm(request.POST, instance=address)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Shipping address updated.')
+            return redirect('ecommerce:shipping_address_list')
+    else:
+        form = ShippingInfoForm(instance=address)
+    return render(request, 'ecommerce/shipping_address_edit.html', {'form': form, 'address': address})
+
+@login_required
+def shipping_address_delete(request, address_id):
+    customer = get_object_or_404(Customer, user=request.user)
+    address = get_object_or_404(ShippingInfo, id=address_id, customer=customer)
+    if request.method == 'POST':
+        if address.order is not None:
+            messages.error(request, 'This address is linked to an order and cannot be deleted.')
+            return redirect('ecommerce:shipping_address_list')
+        address.delete()
+        messages.success(request, 'Shipping address deleted.')
+        return redirect('ecommerce:shipping_address_list')
+    return render(request, 'ecommerce/shipping_address_delete.html', {'address': address})
 
 class ExtendedUserCreationForm(UserCreationForm):
     address = forms.CharField(max_length=255, required=True, label='Address')
@@ -186,12 +236,6 @@ def view_cart(request):
 # Shipping info form
 
 
-class ShippingInfoForm(forms.Form):
-    address = forms.CharField(max_length=255, label='Address')
-    city = forms.CharField(max_length=50, label='City')
-    postal_code = forms.CharField(max_length=20, label='Postal Code')
-    country = forms.CharField(max_length=50, label='Country')
-    phone = forms.CharField(max_length=20, label='Phone')
 
 
 def create_checkout_session(request):
@@ -221,8 +265,11 @@ def create_checkout_session(request):
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            success_url=request.build_absolute_uri('/success/'),
+            success_url=request.build_absolute_uri('/success/') + '?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=request.build_absolute_uri('/cart/'),
+            shipping_address_collection={
+                'allowed_countries': ['US', 'CA', 'GB', 'AU', 'FR', 'DE', 'IN']
+            },
         )
         return redirect(session.url)
     except Exception as e:
@@ -240,18 +287,40 @@ def payment_success(request):
     items = cart.items.select_related('product') if cart else []
     if not items:
         messages.error(request, 'No items found for order.')
-    return redirect('ecommerce:product_list')
+        return redirect('ecommerce:product_list')
     total = sum(item.product.price * item.quantity for item in items)
+    # Get Stripe session and shipping info
+    session_id = request.GET.get('session_id')
+    shipping_info = None
+    if session_id:
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+        session = stripe.checkout.Session.retrieve(session_id)
+        shipping = session.shipping_details
+        if shipping:
+            address = shipping.address
+            shipping_info = ShippingInfo.objects.create(
+                customer=customer,
+                address=address.get('line1', ''),
+                city=address.get('city', ''),
+                postal_code=address.get('postal_code', ''),
+                country=address.get('country', ''),
+                phone=shipping.phone or customer.phone
+            )
     # Create order
     order = Order.objects.create(
         customer=customer, total=total, status='Paid')
     for item in items:
         OrderItem.objects.create(
             order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+    # Link shipping info to order
+    if shipping_info:
+        shipping_info.order = order
+        shipping_info.save()
     # Clear cart
     cart.items.all().delete()
     context = {
         'order': order,
+        'shipping_info': shipping_info,
     }
     return render(request, 'ecommerce/payment_success.html', context)
 

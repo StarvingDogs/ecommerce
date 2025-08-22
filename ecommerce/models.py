@@ -73,14 +73,17 @@ class WishlistItem(models.Model):
 
 
 class ShippingInfo(models.Model):
-	order = models.OneToOneField(Order, on_delete=models.CASCADE)
+	customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='shipping_addresses')
+	order = models.OneToOneField(Order, on_delete=models.CASCADE, blank=True, null=True)
 	address = models.CharField(max_length=255)
 	city = models.CharField(max_length=50)
 	postal_code = models.CharField(max_length=20)
 	country = models.CharField(max_length=50)
 	phone = models.CharField(max_length=20)
 	def __str__(self):
-		return f"Shipping for Order {self.order.id}"
+		if self.order:
+			return f"Shipping for Order {self.order.id}"
+		return f"Shipping for {self.customer.user.username}: {self.address}"
 
 
 class Review(models.Model):

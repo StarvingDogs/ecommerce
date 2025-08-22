@@ -1,0 +1,34 @@
+{% extends 'ecommerce/base.html' %}
+{% block content %}
+<h2>My Shipping Addresses</h2>
+<a href="{% url 'ecommerce:shipping_address_add' %}" class="btn btn-primary mb-3">Add New Address</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Address</th>
+            <th>City</th>
+            <th>Postal Code</th>
+            <th>Country</th>
+            <th>Phone</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for address in addresses %}
+        <tr>
+            <td>{{ address.address }}</td>
+            <td>{{ address.city }}</td>
+            <td>{{ address.postal_code }}</td>
+            <td>{{ address.country }}</td>
+            <td>{{ address.phone }}</td>
+            <td>
+                <a href="{% url 'ecommerce:shipping_address_edit' address.id %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'ecommerce:shipping_address_delete' address.id %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No addresses found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
