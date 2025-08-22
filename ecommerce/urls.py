@@ -3,7 +3,7 @@ from . import views
 
 app_name = "ecommerce"
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.product_list, name='product_list'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('register/', views.register, name='register'),
     path('login/', views.login, name='login'),

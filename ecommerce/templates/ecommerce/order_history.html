@@ -5,7 +5,7 @@
   {% if orders %}
     <div class="list-group">
       {% for order in orders %}
-        <a href="{% url 'ecommerce:order_detail' order.id %}" class="list-group-item list-group-item-action mb-2">
+  <a href="{% url 'ecommerce:order_detail' order.id %}" class="list-group-item list-group-item-action mb-2">
           <h5>Order #{{ order.id }}</h5>
           <span class="badge bg-info">{{ order.status }}</span>
           <div class="mt-4">
@@ -18,6 +18,6 @@
   {% else %}
     <p>You have no orders yet.</p>
   {% endif %}
-  <a href="{% url 'ecommerce:index' %}" class="btn btn-primary mt-3">Back to Shop</a>
+  <a href="{% url 'ecommerce:product_list' %}" class="btn btn-primary mt-3">Back to Shop</a>
 </div>
 {% endblock %}

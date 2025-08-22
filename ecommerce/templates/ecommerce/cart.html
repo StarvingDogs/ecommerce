@@ -38,7 +38,7 @@
     </table>
     <div class="mt-4 d-flex flex-column gap-3">
       <span class="fs-5 me-3"><strong>Subtotal:</strong> ${{ subtotal|floatformat:2 }}</span>
-      <a href="{% url 'ecommerce:index' %}" class="btn btn-primary w-100" style="max-width: 320px;">Continue Shopping</a>
+  <a href="{% url 'ecommerce:product_list' %}" class="btn btn-primary w-100" style="max-width: 320px;">Continue Shopping</a>
       <form action="{% url 'ecommerce:create_checkout_session' %}" method="post" class="w-100" style="max-width: 320px;">
         {% csrf_token %}
         <button type="submit" class="btn btn-success w-100">Checkout</button>
@@ -47,7 +47,7 @@
     </div>
   {% else %}
     <p>Your cart is empty.</p>
-    <a href="{% url 'ecommerce:index' %}" class="btn btn-primary">Shop Now</a>
+  <a href="{% url 'ecommerce:product_list' %}" class="btn btn-primary">Shop Now</a>
   {% endif %}
 </div>
 {% endblock %}

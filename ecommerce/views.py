@@ -44,7 +44,7 @@ def login(request):
             user = form.get_user()
             auth_login(request, user)
             messages.success(request, 'Login successful.')
-            return redirect('ecommerce:index')
+            return redirect('ecommerce:product_list')
         else:
             messages.error(request, 'Invalid username or password.')
     else:
@@ -55,10 +55,10 @@ def login(request):
 def logout(request):
     auth_logout(request)
     messages.success(request, 'You have been logged out.')
-    return redirect('ecommerce:index')
+    return redirect('ecommerce:product_list')
 
 
-def index(request):
+def product_list(request):
     products = Product.objects.all()
     categories = Product.objects.values_list('category', flat=True).distinct()
     brands = Product.objects.values_list('brand', flat=True).distinct()
@@ -85,7 +85,7 @@ def index(request):
         'selected_brand': selected_brand,
         'search_query': search_query,
     }
-    return render(request, 'ecommerce/index.html', context)
+    return render(request, 'ecommerce/product_list.html', context)
 
 
 def product_detail(request, pk):
@@ -96,7 +96,7 @@ def product_detail(request, pk):
         customer = Customer.objects.filter(user=request.user).first()
         if customer:
             wishlists = Wishlist.objects.filter(customer=customer)
-    return render(request, 'ecommerce/detail.html', {'product': product, 'wishlists': wishlists})
+    return render(request, 'ecommerce/product_detail.html', {'product': product, 'wishlists': wishlists})
 
 
 @login_required
@@ -133,13 +133,13 @@ def add_to_cart(request, product_id):
         item.quantity += 1
         item.save()
     messages.success(request, f'Added {product.name} to cart.')
-    # We can add to cart from the product detail page or the index page
-    # Without this the user would be taken to the index page everytime
-    # Let's use this to redirect back to whatever page the user was on (e.g from product detail page) else go back to the index page
+    # We can add to cart from the product detail page or the product list page
+    # Without this the user would be taken to the product list page everytime
+    # Let's use this to redirect back to whatever page the user was on (e.g from product detail page) else go back to the product list page
     referer = request.META.get('HTTP_REFERER')
     if referer:
         return redirect(referer)
-    return redirect('ecommerce:index')
+    return redirect('ecommerce:product_list')
 
 
 @require_POST
@@ -240,7 +240,7 @@ def payment_success(request):
     items = cart.items.select_related('product') if cart else []
     if not items:
         messages.error(request, 'No items found for order.')
-        return redirect('ecommerce:index')
+    return redirect('ecommerce:product_list')
     total = sum(item.product.price * item.quantity for item in items)
     # Create order
     order = Order.objects.create(
